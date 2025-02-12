@@ -1,10 +1,10 @@
 # HUMANITY PROTOCOL BOT
 
-Join here : [testnet.humanity.org](testnet.humanity.org/login?ref=shareithub)
+# JOIN HUMANITY : [testnet.humanity.org](testnet.humanity.org/login?ref=shareithub)
 
-Tutorial by Video [HUMANITY BOT TUTORIAL](https://youtu.be/LdLYZ5fNHks)
+# TUTORIAL VIDEO [HUMANITY BOT TUTORIAL](https://youtu.be/LdLYZ5fNHks)
 
-JOIN NOW IN MY CHANNEL :
+# JOIN NOW IN MY CHANNEL :
 
 [SUBSCRIBE YOUTUBE NOW !](https://www.youtube.com/@SHAREITHUB_COM)
 
@@ -71,7 +71,7 @@ Running bot :
 python3 bot.py
 ```
 
-#AFTER DONE , U CAN OUT SCREEN TO RUNNIN 24 HOURS
+# AFTER DONE , U CAN OUT SCREEN TO RUNNIN 24 HOURS
 
 
 
