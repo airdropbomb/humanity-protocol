@@ -7,7 +7,9 @@ Tutorial by Video [HUMANITY BOT TUTORIAL](https://www.youtube.com/channel/UCUvH2
 JOIN NOW IN MY CHANNEL :
 
 [SUBSCRIBE YOUTUBE NOW !](https://www.youtube.com/@SHAREITHUB_COM)
+
 [SUBSCRIBE TELERAM NOW](https://t.me/SHAREITHUB_COM)
+
 [TELEGRAM GROUP CHAT](https://t.me/DISS_SHAREITHUB)
 
 Tutorial :
