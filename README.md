@@ -72,7 +72,7 @@ Running bot :
 python3 bot.py
 ```
 
-# AFTER DONE , U CAN OUT SCREEN TO RUNNIN 24 HOURS
+# AFTER DONE , U CAN OUT SCREEN TO RUNNING 24 HOURS. USE ( CTRL + A + D )
 
 
 
