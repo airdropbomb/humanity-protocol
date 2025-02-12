@@ -2,7 +2,7 @@
 
 Join here : [testnet.humanity.org](testnet.humanity.org/login?ref=shareithub)
 
-Tutorial by Video [HUMANITY BOT TUTORIAL](https://www.youtube.com/channel/UCUvH2S-T6T_hc7DjxhVd28A/)
+Tutorial by Video [HUMANITY BOT TUTORIAL](https://youtu.be/LdLYZ5fNHks)
 
 JOIN NOW IN MY CHANNEL :
 
