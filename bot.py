@@ -133,7 +133,8 @@ def process_claim(sender_address, private_key, web3, contract):
             'nonce': web3.eth.get_transaction_count(sender_address)
         })
         signed_txn = web3.eth.account.sign_transaction(transaction, private_key=private_key)
-        tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction) 
+
         web3.eth.wait_for_transaction_receipt(tx_hash)
         
         console.print(f"✅ [bold green]Transaksi sukses untuk {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
