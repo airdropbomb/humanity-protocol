@@ -1,4 +1,5 @@
 import shareithub
+import math
 import sys
 import requests
 import time
@@ -119,29 +120,53 @@ def claim_reward(wallets, web3, contract):
 
 def process_claim(sender_address, private_key, web3, contract):
     try:
-        gas_amount = contract.functions.claimReward().estimate_gas({
-            'chainId': web3.eth.chain_id,
-            'from': sender_address,
-            'gasPrice': web3.eth.gas_price,
-            'nonce': web3.eth.get_transaction_count(sender_address)
-        })
-        transaction = contract.functions.claimReward().build_transaction({
-            'chainId': web3.eth.chain_id,
-            'from': sender_address,
-            'gas': gas_amount,
-            'gasPrice': web3.eth.gas_price,
-            'nonce': web3.eth.get_transaction_count(sender_address)
-        })
-        signed_txn = web3.eth.account.sign_transaction(transaction, private_key=private_key)
-        tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction) 
+        max_retries = 15  
+        retry_count = 0
+        gas_price = web3.eth.gas_price
+        nonce = web3.eth.get_transaction_count(sender_address, 'pending') 
 
-        web3.eth.wait_for_transaction_receipt(tx_hash)
-        
-        console.print(f"✅ [bold green]Transaksi sukses untuk {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
+        while retry_count < max_retries:
+            try:
+
+                gas_amount = contract.functions.claimReward().estimate_gas({
+                    'chainId': web3.eth.chain_id,
+                    'from': sender_address,
+                    'gasPrice': int(gas_price),  
+                    'nonce': nonce
+                })
+
+                transaction = contract.functions.claimReward().build_transaction({
+                    'chainId': web3.eth.chain_id,
+                    'from': sender_address,
+                    'gas': gas_amount,
+                    'gasPrice': int(gas_price),  
+                    'nonce': nonce
+                })
+
+                signed_txn = web3.eth.account.sign_transaction(transaction, private_key=private_key)
+
+                tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
+                
+                console.print(f"✅ [bold green]Transaksi sukses untuk {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
+                return  
+
+            except Exception as e:
+                error_message = str(e)
+
+                if "ALREADY_EXISTS: already known" in error_message or "replacement transaction underpriced" in error_message:
+                    console.print(f"⚠️ [yellow]Transaksi duplikat terdeteksi. Meningkatkan gas price...[/yellow]")
+                    gas_price = int(math.ceil(gas_price * 3.2))  
+                    nonce += 1 
+                    retry_count += 1
+                    time.sleep(5)  
+                else:
+                    console.print(f"🚨 [red]Error proses klaim untuk {sender_address}: {error_message}[/red]")
+                    return 
+
+        console.print(f"❌ [bold red]Gagal mengirim transaksi setelah {max_retries} percobaan untuk {sender_address}.[/bold red]")
 
     except Exception as e:
-        console.print(f"🚨 [red]Error proses klaim untuk {sender_address}: {str(e)}[/red]")
-
+        console.print(f"🚨 [red]Gagal mengeksekusi klaim untuk {sender_address}: {str(e)}[/red]")
 def main_loop():
     web3 = setup_blockchain_connection()
     contract = web3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=CONTRACT_ABI)
