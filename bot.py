@@ -22,13 +22,13 @@ CONTRACT_ADDRESS = '0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7'
 CONTRACT_ABI = [{"inputs":[],"name":"AccessControlBadConfirmation","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"bytes32","name":"neededRole","type":"bytes32"}],"name":"AccessControlUnauthorizedAccount","type":"error"},{"inputs":[],"name":"InvalidInitialization","type":"error"},{"inputs":[],"name":"NotInitializing","type":"error"},{"anonymous":False,"inputs":[{"indexed":False,"internalType":"uint64","name":"version","type":"uint64"}],"name":"Initialized","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"from","type":"address"},{"indexed":True,"internalType":"address","name":"to","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":False,"internalType":"bool","name":"bufferSafe","type":"bool"}],"name":"ReferralRewardBuffered","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"enum IRewards.RewardType","name":"rewardType","type":"uint8"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"RewardClaimed","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"bytes32","name":"previousAdminRole","type":"bytes32"},{"indexed":True,"internalType":"bytes32","name":"newAdminRole","type":"bytes32"}],"name":"RoleAdminChanged","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"address","name":"account","type":"address"},{"indexed":True,"internalType":"address","name":"sender","type":"address"}],"name":"RoleGranted","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"address","name":"account","type":"address"},{"indexed":True,"internalType":"address","name":"sender","type":"address"}],"name":"RoleRevoked","type":"event"},{"inputs":[],"name":"DEFAULT_ADMIN_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimBuffer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"claimReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"currentEpoch","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"cycleStartTimestamp","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"}],"name":"getRoleAdmin","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"grantRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"hasRole","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"vcContract","type":"address"},{"internalType":"address","name":"tkn","type":"address"}],"name":"init","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"callerConfirmation","type":"address"}],"name":"renounceRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"revokeRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"startTimestamp","type":"uint256"}],"name":"start","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"stop","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userBuffer","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"epochID","type":"uint256"}],"name":"userClaimStatus","outputs":[{"components":[{"internalType":"uint256","name":"buffer","type":"uint256"},{"internalType":"bool","name":"claimStatus","type":"bool"}],"internalType":"struct IRewards.UserClaim","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userGenesisClaimStatus","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}]
 
 def setup_blockchain_connection():
-    console.print("[bold cyan]🔗 Menghubungkan ke Humanity Protocol...[/bold cyan]")
+    console.print("[bold cyan]🔗 Connecting to Humanity Protocol...[/bold cyan]")
     web3 = Web3(Web3.HTTPProvider(RPC_URL))
 
     if web3.is_connected():
-        console.print("[bold green]✅ Koneksi berhasil![/bold green]")
+        console.print("[bold green]✅ Connection successful![/bold green]")
     else:
-        console.print(f"{Fore.RED}❌ Gagal terhubung!")
+        console.print(f"{Fore.RED}❌ Connection failed!")
         sys.exit(1)
     
     return web3
@@ -38,14 +38,14 @@ def load_wallets():
         with open(PRIVATE_KEYS_FILE, 'r') as file:
             keys = [line.strip() for line in file if line.strip()]
             wallets = [{"private_key": key, "address": Web3().eth.account.from_key(key).address} for key in keys]
-            console.print(f"[bold magenta]🔑 {len(wallets)} Wallet ditemukan![/bold magenta]")
+            console.print(f"[bold magenta]🔑 {len(wallets)} Wallets found![/bold magenta]")
 
             for w in wallets:
                 console.print(f"🔹 Wallet Address: {w['address']}")
             
             return wallets
     except FileNotFoundError:
-        console.print(f"{Fore.RED}🚨 File {PRIVATE_KEYS_FILE} tidak ditemukan!")
+        console.print(f"{Fore.RED}🚨 File {PRIVATE_KEYS_FILE} not found!")
         sys.exit(1)
 
 def claim_faucet(wallets):
@@ -81,19 +81,19 @@ def claim_faucet(wallets):
                 response_json = response.json() if response.status_code == 200 else {}
 
                 if response.status_code == 200:
-                    tx_hash = response_json.get("msg", "TX Hash tidak ditemukan")
-                    console.print(f"💰 [bold green]Faucet berhasil diklaim untuk {wallet['address']}![/bold green] - TX Hash: {tx_hash}")
+                    tx_hash = response_json.get("msg", "TX Hash not found")
+                    console.print(f"💰 [bold green]Faucet successfully claimed for {wallet['address']}![/bold green] - TX Hash: {tx_hash}")
                     break  
                 elif response.status_code == 400:
-                    console.print(f"⚠️ [yellow]Faucet gagal untuk {wallet['address']} - Status Code: 400, Mengulang...[/yellow]")
+                    console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: 400, Retrying...[/yellow]")
                     console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
                     time.sleep(5)  
                 else:
-                    console.print(f"⚠️ [yellow]Faucet gagal untuk {wallet['address']} - Status Code: {response.status_code}[/yellow]")
+                    console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: {response.status_code}[/yellow]")
                     console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
                     time.sleep(10) 
             except Exception as e:
-                console.print(f"🚨 [red]Error klaim faucet untuk {wallet['address']}: {e}[/red]")
+                console.print(f"🚨 [red]Error claiming faucet for {wallet['address']}: {e}[/red]")
                 time.sleep(10) 
 
 def claim_reward(wallets, web3, contract):
@@ -113,10 +113,10 @@ def claim_reward(wallets, web3, contract):
                 console.print(f"🟢 [bold green]Claiming reward for {sender_address} (Genesis reward not claimed).[/bold green]")
                 process_claim(sender_address, wallet["private_key"], web3, contract)
             else:
-                console.print(f"🟡 [bold yellow]Reward sudah diklaim untuk {sender_address} pada epoch {current_epoch}, skipping.[/bold yellow]")
+                console.print(f"🟡 [bold yellow]Reward already claimed for {sender_address} in epoch {current_epoch}, skipping.[/bold yellow]")
 
         except Exception as e:
-            console.print(f"🚨 [red]Error klaim reward untuk {wallet['address']}: {e}[/red]")
+            console.print(f"🚨 [red]Error claiming reward for {wallet['address']}: {e}[/red]")
 
 def process_claim(sender_address, private_key, web3, contract):
     try:
@@ -127,7 +127,6 @@ def process_claim(sender_address, private_key, web3, contract):
 
         while retry_count < max_retries:
             try:
-
                 gas_amount = contract.functions.claimReward().estimate_gas({
                     'chainId': web3.eth.chain_id,
                     'from': sender_address,
@@ -147,26 +146,27 @@ def process_claim(sender_address, private_key, web3, contract):
 
                 tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
                 
-                console.print(f"✅ [bold green]Transaksi sukses untuk {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
+                console.print(f"✅ [bold green]Transaction successful for {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
                 return  
 
             except Exception as e:
                 error_message = str(e)
 
                 if "ALREADY_EXISTS: already known" in error_message or "replacement transaction underpriced" in error_message:
-                    console.print(f"⚠️ [yellow]Transaksi duplikat terdeteksi. Meningkatkan gas price...[/yellow]")
+                    console.print(f"⚠️ [yellow]Duplicate transaction detected. Increasing gas price...[/yellow]")
                     gas_price = int(math.ceil(gas_price * 3.2))  
                     nonce += 1 
                     retry_count += 1
                     time.sleep(5)  
                 else:
-                    console.print(f"🚨 [red]Error proses klaim untuk {sender_address}: {error_message}[/red]")
+                    console.print(f"🚨 [red]Error processing claim for {sender_address}: {error_message}[/red]")
                     return 
 
-        console.print(f"❌ [bold red]Gagal mengirim transaksi setelah {max_retries} percobaan untuk {sender_address}.[/bold red]")
+        console.print(f"❌ [bold red]Failed to send transaction after {max_retries} attempts for {sender_address}.[/bold red]")
 
     except Exception as e:
-        console.print(f"🚨 [red]Gagal mengeksekusi klaim untuk {sender_address}: {str(e)}[/red]")
+        console.print(f"🚨 [red]Failed to execute claim for {sender_address}: {str(e)}[/red]")
+
 def main_loop():
     web3 = setup_blockchain_connection()
     contract = web3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=CONTRACT_ABI)
@@ -175,7 +175,7 @@ def main_loop():
     while True:
         claim_faucet(wallets)
         claim_reward(wallets, web3, contract)
-        console.print(f"🕒 [cyan]Menunggu 1 menit sebelum proses berikutnya...[/cyan]")
+        console.print(f"🕒 [cyan]Waiting 1 minute before the next process...[/cyan]")
         time.sleep(60)
 
 if __name__ == "__main__":
