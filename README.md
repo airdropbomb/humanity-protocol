@@ -37,12 +37,7 @@ sudo apt install git -y
 
 Git clone folder BOT HUMANITY :
 ```
-git clone https://github.com/airdropbomb/humanity-protocol.git
-```
-
-Go to folder Bot :
-```
-cd humanity-protocol
+git clone https://github.com/airdropbomb/humanity-protocol.git && cd humanity-protocol
 ```
 
 Install & use venv :
