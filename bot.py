@@ -47,9 +47,11 @@ def load_wallets():
 
 def claim_faucet(wallets):
     ua = UserAgent()
+    max_retries = 3  # Maximum 3 retries per wallet
 
     for wallet in wallets:
-        while True: 
+        retry_count = 0
+        while retry_count < max_retries:
             headers = {
                 "authority": "faucet.testnet.humanity.org",
                 "method": "POST",
@@ -80,18 +82,23 @@ def claim_faucet(wallets):
                 if response.status_code == 200:
                     tx_hash = response_json.get("msg", "TX Hash not found")
                     console.print(f"💰 [bold green]Faucet successfully claimed for {wallet['address']}![/bold green] - TX Hash: {tx_hash}")
-                    break  
+                    break  # Success, move to next wallet
                 elif response.status_code == 400:
                     console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: 400, Retrying...[/yellow]")
                     console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
-                    time.sleep(5)  
+                    time.sleep(5)
                 else:
                     console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: {response.status_code}[/yellow]")
                     console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
-                    time.sleep(10) 
+                    time.sleep(10)
             except Exception as e:
                 console.print(f"🚨 [red]Error claiming faucet for {wallet['address']}: {e}[/red]")
-                time.sleep(10) 
+                time.sleep(10)
+            
+            retry_count += 1
+            if retry_count >= max_retries:
+                console.print(f"❌ [bold red]Failed to claim faucet for {wallet['address']} after {max_retries} attempts, skipping...[/bold red]")
+                break  # Skip to next wallet
 
 def claim_reward(wallets, web3, contract):
     for wallet in wallets:
