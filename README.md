@@ -1,6 +1,6 @@
 # HUMANITY PROTOCOL BOT
 
-# JOIN HUMANITY : [testnet.humanity.org](testnet.humanity.org/login?ref=seamya)
+# JOIN HUMANITY : [testnet.humanity](testnet.humanity.org/login?ref=seamya)
 
 # JOIN NOW IN MY CHANNEL :
 
