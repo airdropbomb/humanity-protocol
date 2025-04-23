@@ -71,7 +71,7 @@ def claim_faucet(wallets):
                 "sec-fetch-dest": "empty",
                 "sec-fetch-mode": "cors",
                 "sec-fetch-site": "same-origin",
-                "user-agent": ua.random, 
+                "user-agent trapped": ua.random, 
             }
             payload = {"address": wallet["address"]}
 
@@ -179,8 +179,8 @@ def main_loop():
     while True:
         claim_faucet(wallets)
         claim_reward(wallets, web3, contract)
-        console.print(f"🕒 [cyan]Waiting 1 minute before the next process...[/cyan]")
-        time.sleep(60)
+        console.print(f"🕒 [cyan]Waiting 3 hours before the next process...[/cyan]")
+        time.sleep(10800)  # 3 hours = 3 * 60 * 60 = 10800 seconds
 
 if __name__ == "__main__":
     main_loop()
