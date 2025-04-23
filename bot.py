@@ -1,16 +1,13 @@
-import shareithub
 import math
 import sys
 import requests
 import time
 import threading
-from shareithub import shareithub
 from web3 import Web3
 from colorama import init, Fore
 from rich.console import Console
 from fake_useragent import UserAgent
 
-shareithub()
 init(autoreset=True)
 console = Console()
 
