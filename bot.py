@@ -1,186 +1,156 @@
-import math
+import os
 import sys
-import requests
+import json
 import time
-import threading
-from web3 import Web3
-from colorama import init, Fore
+import random
+import logging
+import requests
+from datetime import datetime
 from rich.console import Console
-from fake_useragent import UserAgent
+from rich.panel import Panel
+from rich.text import Text
+from rich.live import Live
+from rich.table import Table
 
-init(autoreset=True)
+# Constants
+BASE_URL = "https://testnet.humanity.org"
+TOKEN_FILE = "tokens.txt"
+LOG_FILE = "log.txt"
+
+# Rich console setup
 console = Console()
 
-RPC_URL = 'https://rpc.testnet.humanity.org'
-PRIVATE_KEYS_FILE = 'private_keys.txt'
-FAUCET_API_URL = "https://faucet.testnet.humanity.org/api/claim"
-CONTRACT_ADDRESS = '0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7'
+# Logging setup
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.ERROR,
+    format='[%(asctime)s] %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S'
+)
 
-CONTRACT_ABI = [{"inputs":[],"name":"AccessControlBadConfirmation","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"bytes32","name":"neededRole","type":"bytes32"}],"name":"AccessControlUnauthorizedAccount","type":"error"},{"inputs":[],"name":"InvalidInitialization","type":"error"},{"inputs":[],"name":"NotInitializing","type":"error"},{"anonymous":False,"inputs":[{"indexed":False,"internalType":"uint64","name":"version","type":"uint64"}],"name":"Initialized","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"from","type":"address"},{"indexed":True,"internalType":"address","name":"to","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":False,"internalType":"bool","name":"bufferSafe","type":"bool"}],"name":"ReferralRewardBuffered","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"enum IRewards.RewardType","name":"rewardType","type":"uint8"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"RewardClaimed","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"bytes32","name":"previousAdminRole","type":"bytes32"},{"indexed":True,"internalType":"bytes32","name":"newAdminRole","type":"bytes32"}],"name":"RoleAdminChanged","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"address","name":"account","type":"address"},{"indexed":True,"internalType":"address","name":"sender","type":"address"}],"name":"RoleGranted","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":True,"internalType":"address","name":"account","type":"address"},{"indexed":True,"internalType":"address","name":"sender","type":"address"}],"name":"RoleRevoked","type":"event"},{"inputs":[],"name":"DEFAULT_ADMIN_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimBuffer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"claimReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"currentEpoch","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"cycleStartTimestamp","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"}],"name":"getRoleAdmin","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"grantRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"hasRole","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"vcContract","type":"address"},{"internalType":"address","name":"tkn","type":"address"}],"name":"init","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"callerConfirmation","type":"address"}],"name":"renounceRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"revokeRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"startTimestamp","type":"uint256"}],"name":"start","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"stop","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userBuffer","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"epochID","type":"uint256"}],"name":"userClaimStatus","outputs":[{"components":[{"internalType":"uint256","name":"buffer","type":"uint256"},{"internalType":"bool","name":"claimStatus","type":"bool"}],"internalType":"struct IRewards.UserClaim","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userGenesisClaimStatus","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}]
+def load_file_lines(filepath):
+    if not os.path.exists(filepath):
+        return []
+    with open(filepath, encoding='utf-8') as f:
+        return [line.strip() for line in f if line.strip()]
 
-def setup_blockchain_connection():
-    console.print("[bold cyan]🔗 Connecting to Humanity Protocol...[/bold cyan]")
-    web3 = Web3(Web3.HTTPProvider(RPC_URL))
+if not os.path.exists(TOKEN_FILE):
+    console.print("[bold red]❌ File tokens.txt not found![/bold red]")
+    sys.exit(1)
 
-    if web3.is_connected():
-        console.print("[bold green]✅ Connection successful![/bold green]")
-    else:
-        console.print(f"{Fore.RED}❌ Connection failed!")
-        sys.exit(1)
-    
-    return web3
+TOKENS = load_file_lines(TOKEN_FILE)
 
-def load_wallets():
+def log_error(message):
+    logging.error(message)
+
+def show_banner():
+    banner_text = Text("Auto Claim Humanity Protocol 🚀", style="bold cyan", justify="center")
+    panel = Panel(banner_text, expand=False, border_style="cyan", title="Start", subtitle="ADB NODE")
+    console.print(panel)
+
+def call(endpoint, token, method="POST", body=None):
+    url = BASE_URL + endpoint
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "content-type": "application/json",
+        "authorization": f"Bearer {token}",
+        "token": token,
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
+
+    session = requests.Session()
     try:
-        with open(PRIVATE_KEYS_FILE, 'r') as file:
-            keys = [line.strip() for line in file if line.strip()]
-            wallets = [{"private_key": key, "address": Web3().eth.account.from_key(key).address} for key in keys]
-            console.print(f"[bold magenta]🔑 {len(wallets)} Wallets found![/bold magenta]")
+        if method.upper() == "GET":
+            resp = session.get(url, headers=headers, timeout=15)
+        else:
+            resp = session.post(url, headers=headers, json=body or {}, timeout=15)
 
-            for w in wallets:
-                console.print(f"🔹 Wallet Address: {w['address']}")
-            
-            return wallets
-    except FileNotFoundError:
-        console.print(f"{Fore.RED}🚨 File {PRIVATE_KEYS_FILE} not found!")
-        sys.exit(1)
-
-def claim_faucet(wallets):
-    ua = UserAgent()
-    max_retries = 3  # Maximum 3 retries per wallet
-
-    for wallet in wallets:
-        retry_count = 0
-        while retry_count < max_retries:
-            headers = {
-                "authority": "faucet.testnet.humanity.org",
-                "method": "POST",
-                "path": "/api/claim",
-                "scheme": "https",
-                "accept": "*/*",
-                "accept-encoding": "gzip, deflate, br, zstd",
-                "accept-language": "en-US,en;q=0.9,id;q=0.8",
-                "content-length": "56",
-                "content-type": "application/json",
-                "origin": "https://faucet.testnet.humanity.org",
-                "priority": "u=1, i",
-                "referer": "https://faucet.testnet.humanity.org/",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "user-agent trapped": ua.random, 
-            }
-            payload = {"address": wallet["address"]}
-
-            try:
-                response = requests.post(FAUCET_API_URL, json=payload, headers=headers)
-                response_json = response.json() if response.status_code == 200 else {}
-
-                if response.status_code == 200:
-                    tx_hash = response_json.get("msg", "TX Hash not found")
-                    console.print(f"💰 [bold green]Faucet successfully claimed for {wallet['address']}![/bold green] - TX Hash: {tx_hash}")
-                    break  # Success, move to next wallet
-                elif response.status_code == 400:
-                    console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: 400, Retrying...[/yellow]")
-                    console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
-                    time.sleep(5)
-                else:
-                    console.print(f"⚠️ [yellow]Faucet failed for {wallet['address']} - Status Code: {response.status_code}[/yellow]")
-                    console.print(f"ℹ️ [cyan]Response: {response.text}[/cyan]")
-                    time.sleep(10)
-            except Exception as e:
-                console.print(f"🚨 [red]Error claiming faucet for {wallet['address']}: {e}[/red]")
-                time.sleep(10)
-            
-            retry_count += 1
-            if retry_count >= max_retries:
-                console.print(f"❌ [bold red]Failed to claim faucet for {wallet['address']} after {max_retries} attempts, skipping...[/bold red]")
-                break  # Skip to next wallet
-
-def claim_reward(wallets, web3, contract):
-    for wallet in wallets:
         try:
-            account = web3.eth.account.from_key(wallet["private_key"])
-            sender_address = account.address
+            response_data = resp.json()
+        except json.JSONDecodeError as e:
+            raise Exception(f"Received data is not JSON: {str(e)}")
 
-            genesis_claimed = contract.functions.userGenesisClaimStatus(sender_address).call()
-            current_epoch = contract.functions.currentEpoch().call()
-            _, claim_status = contract.functions.userClaimStatus(sender_address, current_epoch).call()
+        if not resp.ok:
+            message = response_data.get("message", "Unknown error")
+            raise Exception(f"{resp.status_code} {resp.reason}: {message}")
 
-            if genesis_claimed and not claim_status:
-                console.print(f"🟢 [bold green]Claiming reward for {sender_address} (Genesis reward claimed).[/bold green]")
-                process_claim(sender_address, wallet["private_key"], web3, contract)
-            elif not genesis_claimed:
-                console.print(f"🟢 [bold green]Claiming reward for {sender_address} (Genesis reward not claimed).[/bold green]")
-                process_claim(sender_address, wallet["private_key"], web3, contract)
-            else:
-                console.print(f"🟡 [bold yellow]Reward already claimed for {sender_address} in epoch {current_epoch}, skipping.[/bold yellow]")
-
-        except Exception as e:
-            console.print(f"🚨 [red]Error claiming reward for {wallet['address']}: {e}[/red]")
-
-def process_claim(sender_address, private_key, web3, contract):
-    try:
-        max_retries = 15  
-        retry_count = 0
-        gas_price = web3.eth.gas_price
-        nonce = web3.eth.get_transaction_count(sender_address, 'pending') 
-
-        while retry_count < max_retries:
-            try:
-                gas_amount = contract.functions.claimReward().estimate_gas({
-                    'chainId': web3.eth.chain_id,
-                    'from': sender_address,
-                    'gasPrice': int(gas_price),  
-                    'nonce': nonce
-                })
-
-                transaction = contract.functions.claimReward().build_transaction({
-                    'chainId': web3.eth.chain_id,
-                    'from': sender_address,
-                    'gas': gas_amount,
-                    'gasPrice': int(gas_price),  
-                    'nonce': nonce
-                })
-
-                signed_txn = web3.eth.account.sign_transaction(transaction, private_key=private_key)
-
-                tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-                
-                console.print(f"✅ [bold green]Transaction successful for {sender_address} | TX Hash: {web3.to_hex(tx_hash)}[/bold green]")
-                return  
-
-            except Exception as e:
-                error_message = str(e)
-
-                if "ALREADY_EXISTS: already known" in error_message or "replacement transaction underpriced" in error_message:
-                    console.print(f"⚠️ [yellow]Duplicate transaction detected. Increasing gas price...[/yellow]")
-                    gas_price = int(math.ceil(gas_price * 3.2))  
-                    nonce += 1 
-                    retry_count += 1
-                    time.sleep(5)  
-                else:
-                    console.print(f"🚨 [red]Error processing claim for {sender_address}: {error_message}[/red]")
-                    return 
-
-        console.print(f"❌ [bold red]Failed to send transaction after {max_retries} attempts for {sender_address}.[/bold red]")
+        return response_data
 
     except Exception as e:
-        console.print(f"🚨 [red]Failed to execute claim for {sender_address}: {str(e)}[/red]")
+        raise Exception(f"Request failed ({endpoint}): {str(e)}")
 
-def main_loop():
-    web3 = setup_blockchain_connection()
-    contract = web3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=CONTRACT_ABI)
-    wallets = load_wallets()
+def process_token(token, index):
+    console.rule(f"[cyan]🔹 Starting Token #{index + 1}")
+    try:
+        user_info = call("/api/user/userInfo", token)
+        user_data = user_info.get("data", {})
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Information", style="cyan")
+        table.add_column("Value", style="white")
+        table.add_row("✅ Nickname", user_data.get("nickName", "Unknown"))
+        table.add_row("✅ Wallet", user_data.get("ethAddress", "Unknown"))
+        console.print(table)
 
-    while True:
-        claim_faucet(wallets)
-        claim_reward(wallets, web3, contract)
-        console.print(f"🕒 [cyan]Waiting 3 hours before the next process...[/cyan]")
-        time.sleep(10800)  # 3 hours = 3 * 60 * 60 = 10800 seconds
+        balance = call("/api/rewards/balance", token, method="GET")
+        console.print(f"[yellow]💰 HP Points:[/yellow] {balance.get('balance', {}).get('total_rewards', 0)}")
+
+        reward_status = call("/api/rewards/daily/check", token)
+        console.print(f"[blue]📊 Status:[/blue] {reward_status.get('message', '-')}")
+
+        if not reward_status.get("available", False):
+            console.print("[orange1]⏳ Claim completed, skipping[/orange1]")
+            return
+
+        claim = call("/api/rewards/daily/claim", token)
+        claim_data = claim.get("data", {})
+        if claim_data and claim_data.get("amount"):
+            console.print(f"[green]🎉 Claim successful, HP Points: {claim_data['amount']}[/green]")
+        elif claim.get("message") and "successfully claimed" in claim.get("message", ""):
+            console.print("[green]🎉 You have successfully claimed HP Points today.[/green]")
+        else:
+            console.print(f"[red]❌ Claim failed, data mismatch: {claim}[/red]")
+            return
+
+        updated_balance = call("/api/rewards/balance", token, method="GET")
+        if updated_balance.get("balance"):
+            console.print(f"[green]💰 HP Points after claim:[/green] {updated_balance['balance']['total_rewards']}")
+        else:
+            console.print(f"[red]❌ Failed to update HP Points: {updated_balance}[/red]")
+
+    except Exception as err:
+        console.print(f"[bold red]❌ Error: {err}[/bold red]")
+        log_error(f"Token #{index + 1} failed: {err}")
+
+    delay = random.randint(15000, 20000) / 1000
+    console.print(f"[yellow]⏳ Waiting {delay:.2f} seconds before continuing...[/yellow]")
+    time.sleep(delay)
+
+def countdown(seconds, on_finish):
+    try:
+        with Live(refresh_per_second=1) as live:
+            while seconds >= 0:
+                hours, rem = divmod(seconds, 3600)
+                minutes, secs = divmod(rem, 60)
+                time_str = f"{hours:02d}:{minutes:02d}:{secs:02d}"
+                live.update(Text(f"⏳ Waiting {time_str} for the next claim", style="bold yellow"))
+                time.sleep(1)
+                seconds -= 1
+        console.print("[bold green]\n⏳ Countdown finished, starting new round...[/bold green]")
+        on_finish()
+    except KeyboardInterrupt:
+        console.print("\n[bold red]🛑 Program stopped by user.[/bold red]")
+        sys.exit(0)
+
+def start_round():
+    console.print(f"\n[bold green]🚀 Total accounts: {len(TOKENS)} accounts...[/bold green]")
+    for i, token in enumerate(TOKENS):
+        process_token(token, i)
+    console.print("[bold green]✅ Claim completed, waiting 10 hr 30 mins for next claim...[/bold green]")
+    countdown(10 * 60 * 60, start_round)
+
+def batch_run():
+    show_banner()
+    start_round()
 
 if __name__ == "__main__":
-    main_loop()
+    batch_run()
