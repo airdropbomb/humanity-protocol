@@ -146,7 +146,7 @@ def start_round():
     for i, token in enumerate(TOKENS):
         process_token(token, i)
     console.print("[bold green]✅ Claim completed, waiting 10 hr 30 mins for next claim...[/bold green]")
-    countdown(10 * 60 * 60, start_round)
+    countdown(37800, start_round)
 
 def batch_run():
     show_banner()
